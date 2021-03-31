@@ -28,6 +28,10 @@ header {
   border-color: steelblue; */
 }
 
+.stop-sign {
+  margin: auto 0;
+}
+
 .array-bar {
   background-color: steelblue;
   width: 100%;
