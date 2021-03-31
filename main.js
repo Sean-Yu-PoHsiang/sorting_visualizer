@@ -1,18 +1,49 @@
 "use strict"
 
-const model = {
-  randomArray: [],
-  dataSize: 0,
-  sortingSpeed: 0,
-  stopSign: "run",
+const utility = {
   generateArray(n, min, max) {
     const number = []
     for (let i = 0; i < n; i++) {
-
       number.push(Math.floor(Math.random() * (max - min + 1) + min))
     }
     return number
+  },
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  },
+  sortArrayByJS(array) {
+    return array.sort((a, b) => a - b)
+  },
+  checkArrayEqual(arrayOne, arrayTwo) {
+    if (arrayOne.length !== arrayTwo.length) {
+      return false
+    }
+    for (let i = 0; i < arrayOne.length; i++) {
+      if (arrayOne[i] !== arrayTwo[i]) {
+        return false
+      }
+    }
+    return true
+  },
+  checkArrayTimes(n) {
+    for (let i = 0; i < n; i++) {
+      let testArray = utility.generateArray(300, 10, 300)
+      let result = this.checkArrayEqual(this.sortArrayByJS(testArray), mergeSort(testArray))
+      console.log(result)
+    }
   }
+}
+
+const model = {
+  array: [],
+  isProcessing: false,
+  dataSize: document.querySelector("#data-size").value,
+  sortingSpeed: document.querySelector("#sorting-speed").value,
+  generateBtn: document.querySelector('#generateBtn'),
+  dataSizeInput: document.querySelector("#data-size"),
+  sortingSpeedInput: document.querySelector("#sorting-speed"),
+  sortingBtn: document.querySelector("#navigator"),
+  stopSign: document.querySelector(".stop-sign")
 }
 
 const view = {
@@ -53,7 +84,6 @@ const view = {
       }
     }
     panel.innerHTML = rawHTML
-    // console.log(currentI, currentMinIndex, currentJ)
   },
   renderArrayBubbleSort(array, currentI, currentMinIndex, currentJ) {
     const panel = document.querySelector('.array-container')
@@ -92,76 +122,89 @@ const view = {
       }
     }
     panel.innerHTML = rawHTML
-    console.log(currentI, currentMinIndex, currentJ)
   },
-  renderNotification() {
-    document.querySelector(".navigator").innerHTML = `<h5>Computing... refresh page to reset</h5>`
+  renderArrayMergeSort(array, currentI, currentJ) {
+    const panel = document.querySelector('.array-container')
+    let rawHTML = ''
+    for (let i = 0; i < array.length; i++) {
+      let heightPercentage = (array[i] / 300) * 100
+      let widthPercentage = (1 / array.length) * 100
+
+      if (currentI === i || currentJ === i) {
+        rawHTML += `
+          <div class="array-bar-shell" style="width: ${widthPercentage}%">
+            <div class="array-bar sorting" style="height: ${heightPercentage}%"></div>
+          </div>`
+      } else {
+        rawHTML += `
+          <div class="array-bar-shell" style="width: ${widthPercentage}%">
+            <div class="array-bar" style="height: ${heightPercentage}%"></div>
+          </div>`
+      }
+    }
+    panel.innerHTML = rawHTML
   },
-  renderStopBtn() {
-    document.querySelector(".navigator").innerHTML = `<button type="button" class="btn btn-danger btn-sort" id="stopBtn">Stop</button>`
+  disabledBtn() {
+    for (let i = 0; i < 4; i++) {
+      model.sortingBtn.children[i].disabled = true
+    }
+    model.generateBtn.disabled = true
   },
-  renderSortingBtn() {
-    document.querySelector(".navigator").innerHTML = `
-      <h5>Choose an Sorting Algorithm</h5>
-      <button type="button" class="btn btn-warning btn-sort" id="selectionSort">Selection Sort</button>
-      <button type="button" class="btn btn-warning btn-sort" id="InsertionSort">Insertion Sort</button>
-      <button type="button" class="btn btn-warning btn-sort" id="bubbleSort">Bubble Sort</button>
-      <button type="button" class="btn btn-dark btn-sort" id="quickSort">Quick Sort</button>
-      <button type="button" class="btn btn-dark btn-sort" id="mergeSort">Merge Sort</button>`
+  enabledBtn() {
+    for (let i = 0; i < 4; i++) {
+      model.sortingBtn.children[i].disabled = false
+    }
+    model.generateBtn.disabled = false
+  },
+  toggleStopSign() {
+    model.stopSign.classList.toggle('d-none')
   }
 }
 
 const controller = {
-  default() {
-    //generate new array
-    model.dataSize = document.querySelector("#data-size").value
-    model.randomArray = model.generateArray(model.dataSize, 1, 300)
-    //set regenerate btn
-    this.setRegenerateBtn()
-    //set event listener on input
+  appStart() {
+    model.array = utility.generateArray(model.dataSize, 1, 300)
+    view.renderArray(model.array)
+    this.setGenerateBtnEventListener()
     this.setInputEventListener()
-    //rendering array on panel
-    view.renderArray(model.randomArray)
+    this.setSortingBtnEventListener()
   },
-  setSortingBtn() {
-    const startBtn = document.querySelector(".navigator")
-    startBtn.addEventListener("click", function (event) {
-      model.sortingSpeed = document.querySelector("#sorting-speed").value
-      if (event.target.matches("#selectionSort")) {
-        view.renderNotification()
-        controller.selectionSort(model.randomArray)
-      } else if (event.target.matches("#InsertionSort")) {
-        view.renderNotification()
-        controller.insertionSort(model.randomArray)
-      } else if (event.target.matches("#bubbleSort")) {
-        view.renderNotification()
-        controller.bubbleSort(model.randomArray)
-      }
-    })
-  },
-  setStopBtn() {
-    const stopBtn = document.querySelector("#stopBtn")
-    stopBtn.addEventListener("click", () => {
-      model.stopSign = "stop"
-      view.renderSortingBtn()
-      controller.setSortingBtn()
-    })
-  },
-  setRegenerateBtn() {
-    const regenarateBtn = document.querySelector("#regenerateBtn")
-    regenarateBtn.addEventListener("click", function (event) {
-      model.randomArray = model.generateArray(model.dataSize, 1, 300)
-      view.renderArray(model.randomArray)
+  setGenerateBtnEventListener() {
+    model.generateBtn.addEventListener("click", function (event) {
+      model.array = utility.generateArray(model.dataSize, 1, 300)
+      view.renderArray(model.array)
     })
   },
   setInputEventListener() {
-    const adjustParameter = document.querySelector("#data-size")
-    adjustParameter.addEventListener("input", function (event) {
-      model.dataSize = document.querySelector("#data-size").value
-      model.randomArray = model.generateArray(model.dataSize, 1, 300)
-      view.renderArray(model.randomArray)
+    model.dataSizeInput.addEventListener("input", function (event) {
+      model.dataSize = event.target.value
+      model.array = utility.generateArray(model.dataSize, 1, 300)
+      view.renderArray(model.array)
+    })
+    model.sortingSpeedInput.addEventListener("input", event => {
+      model.sortingSpeed = event.target.value
     })
   },
+  setSortingBtnEventListener() {
+    model.sortingBtn.addEventListener("click", function (event) {
+      if (event.target.matches("button")) {
+        view.disabledBtn()
+        view.toggleStopSign()
+      }
+      if (event.target.matches("#selectionSort")) {
+        controller.selectionSort(model.array)
+      } else if (event.target.matches("#InsertionSort")) {
+        controller.insertionSort(model.array)
+      } else if (event.target.matches("#bubbleSort")) {
+        controller.bubbleSort(model.array)
+      }
+      else if (event.target.matches('#mergeSort')) {
+        controller.mergeSort(model.array)
+      }
+    })
+  },
+
+  //sorting algorithm
   selectionSort: async function selectionSort(array) {
     for (let i = 0; i < array.length; i++) {
       let minIndex = i
@@ -169,19 +212,20 @@ const controller = {
         if (array[j] < array[minIndex]) {
           minIndex = j
         }
+        if (model.stop) {
+          model.stop = false
+          return
+        }
 
-        //rendering bar, constant changing
         view.renderArray(array, i, minIndex, j)
-        //pause loop
         await utility.sleep((1 - (model.sortingSpeed / 1000)) * 100)
       }
       ;[array[i], array[minIndex]] = [array[minIndex], array[i]]
 
-      //final rendering
       view.renderArray(array, i)
     }
-    view.renderSortingBtn()
-    return array
+    view.enabledBtn()
+    view.toggleStopSign()
   },
   insertionSort: async function insertionSort(array) {
     for (let i = 1; i < array.length; i++) {
@@ -193,20 +237,17 @@ const controller = {
       }
       array.splice(j, 0, array[i])
       array.splice(i + 1, 1)
-      //rendering bar, constant changing
       view.renderArray(array, i, -1, j)
-      //pause loop
     }
     view.renderArray(array, array.length + 1)
-    view.renderSortingBtn()
-    return array
+    view.enabledBtn()
+    view.toggleStopSign()
   },
   bubbleSort: async function bubbleSort(array) {
     for (let i = array.length; i > 0; i--) {
       let swap = 0
       for (let j = 0; j < i; j++) {
         view.renderArrayBubbleSort(array, i - 1, j, j + 1)
-        // await utility.sleep(1000)
         await utility.sleep((1 - (model.sortingSpeed / 1000)) * 100)
         if (array[j] > array[j + 1]) {
           [array[j], array[j + 1]] = [array[j + 1], array[j]]
@@ -215,66 +256,73 @@ const controller = {
       }
       if (swap === 0) {
         view.renderArrayBubbleSort(array, i, -1)
-        view.renderSortingBtn()
-        return array
+        view.enabledBtn()
+        view.toggleStopSign()
+        return
       }
     }
-    return array
   },
-  quickSort: async function mergeSort() {
+  quickSort: async function quickSort() {
 
   },
-  mergeSort: async function mergeSort() {
+  mergeSort: async function mergeSort(arr) {
+    let sorted = [...arr]
+    let n = sorted.length
+    let buffer = []
 
-  }
-}
+    for (let size = 1; size < n; size *= 2) {
+      for (let leftStart = 0; leftStart < n; leftStart = leftStart + 2 * size) {
+        let left = leftStart
+        let right = Math.min(left + size, n)
+        let leftLimit = right
+        let rightLimit = Math.min(right + size, n)
+        let i = left
 
-const utility = {
-  sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  },
-  sortArrayByJS(array) {
-    return array.sort((a, b) => a - b)
-  },
-  checkArrayEqual(arrayOne, arrayTwo) {
-    if (arrayOne.length !== arrayTwo.length) {
-      return false
-    }
-    for (let i = 0; i < arrayOne.length; i++) {
-      if (arrayOne[i] !== arrayTwo[i]) {
-        return false
+        while (left < leftLimit && right < rightLimit) {
+          if (sorted[left] <= sorted[right]) {
+            buffer[i] = sorted[left]
+            model.array[i] = buffer[i]
+            i++
+            left++
+            await utility.sleep((1 - (model.sortingSpeed / 1000)) * 100)
+            view.renderArrayMergeSort(model.array, left, right)
+          } else {
+            buffer[i] = sorted[right]
+            model.array[i] = buffer[i]
+            i++
+            right++
+            await utility.sleep((1 - (model.sortingSpeed / 1000)) * 100)
+            view.renderArrayMergeSort(model.array, left, right)
+          }
+        }
+        while (left < leftLimit) {
+          buffer[i] = sorted[left]
+          model.array[i] = buffer[i]
+          i++
+          left++
+          await utility.sleep((1 - (model.sortingSpeed / 1000)) * 100)
+          view.renderArrayMergeSort(model.array, left, right)
+        }
+        while (right < rightLimit) {
+          buffer[i] = sorted[right]
+          model.array[i] = buffer[i]
+          i++
+          right++
+          await utility.sleep((1 - (model.sortingSpeed / 1000)) * 100)
+          view.renderArrayMergeSort(model.array, left, right)
+        }
       }
+
+      sorted = [...buffer]
+      await utility.sleep((1 - (model.sortingSpeed / 1000)) * 100)
+      view.renderArrayMergeSort(model.array)
     }
-    return true
-  },
-  checkArrayTimes(n) {
-    for (let i = 0; i < n; i++) {
-      let testArray = model.generateArray(300, 10, 300)
-      let result = this.checkArrayEqual(this.sortArrayByJS(testArray), mergeSort(testArray))
-      console.log(result)
-    }
+
+    view.renderArray(model.array, 0, undefined, undefined)
+    view.enabledBtn()
+    view.toggleStopSign()
+    return sorted
   }
 }
 
-controller.default()
-controller.setSortingBtn()
-
-function merge(left, right) {
-  var result = [];
-  while (left.length > 0 && right.length > 0) {
-    if (left[0] < right[0]) {
-      result.push(left.shift());
-    } else {
-      result.push(right.shift());
-    }
-  }
-  return result.concat(left, right);
-}
-
-function mergeSort(arr) {
-  if (arr.length <= 1) return arr;
-  var middle = Math.floor(arr.length / 2);
-  var left = arr.slice(0, middle);
-  var right = arr.slice(middle);
-  return merge(mergeSort(left), mergeSort(right));
-}
+controller.appStart()

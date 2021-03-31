@@ -22,10 +22,10 @@ header {
   margin-bottom: 5px;
 }
 
-#regenerateBtn {
+#generateBtn {
   flex-wrap: nowrap;
-  background-color: steelblue;
-  border-color: steelblue;
+  /* background-color: steelblue;
+  border-color: steelblue; */
 }
 
 .array-bar {
