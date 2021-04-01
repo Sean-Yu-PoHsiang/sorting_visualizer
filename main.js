@@ -11,27 +11,14 @@ const utility = {
   sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   },
-  sortArrayByJS(array) {
-    return array.sort((a, b) => a - b)
-  },
-  checkArrayEqual(arrayOne, arrayTwo) {
-    if (arrayOne.length !== arrayTwo.length) {
-      return false
-    }
-    for (let i = 0; i < arrayOne.length; i++) {
-      if (arrayOne[i] !== arrayTwo[i]) {
+  isArraySorted(arr) {
+    for (let i = 0; i < arr.length - 1; i++) {
+      if (arr[i] > arr[i + 1]) {
         return false
       }
     }
     return true
   },
-  checkArrayTimes(n) {
-    for (let i = 0; i < n; i++) {
-      let testArray = utility.generateArray(300, 10, 300)
-      let result = this.checkArrayEqual(this.sortArrayByJS(testArray), mergeSort(testArray))
-      console.log(result)
-    }
-  }
 }
 
 const model = {
@@ -145,13 +132,13 @@ const view = {
     panel.innerHTML = rawHTML
   },
   disabledBtn() {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       model.sortingBtn.children[i].disabled = true
     }
     model.generateBtn.disabled = true
   },
   enabledBtn() {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       model.sortingBtn.children[i].disabled = false
     }
     model.generateBtn.disabled = false
@@ -197,8 +184,9 @@ const controller = {
         controller.insertionSort(model.array)
       } else if (event.target.matches("#bubbleSort")) {
         controller.bubbleSort(model.array)
-      }
-      else if (event.target.matches('#mergeSort')) {
+      } else if (event.target.matches('#quickSort')) {
+        controller.quickSort(model.array)
+      } else if (event.target.matches('#mergeSort')) {
         controller.mergeSort(model.array)
       }
     })
@@ -262,8 +250,46 @@ const controller = {
       }
     }
   },
-  quickSort: async function quickSort() {
+  quickSort: async function quickSort(arr) {
+    const stack = []
+    stack.push(0)
+    stack.push(arr.length - 1)
 
+    while (stack[stack.length - 1] >= 0) {
+      const end = stack.pop()
+      const start = stack.pop()
+
+      let pivotIndex = start
+      const pivotValue = arr[end]
+
+      for (let i = start; i < end; i++) {
+        if (arr[i] < pivotValue) {
+          ;[arr[i], arr[pivotIndex]] = [arr[pivotIndex], arr[i]]
+          pivotIndex++
+          await utility.sleep((1 - (model.sortingSpeed / 1000)) * 100)
+          view.renderArrayMergeSort(arr, i, pivotIndex)
+        }
+        await utility.sleep((1 - (model.sortingSpeed / 1000)) * 100)
+        view.renderArrayMergeSort(arr, i, pivotIndex)
+      }
+
+      [arr[pivotIndex], arr[end]] = [arr[end], arr[pivotIndex]]
+
+      if (pivotIndex - 1 > start) {
+        stack.push(start)
+        stack.push(pivotIndex - 1)
+      }
+
+      if (pivotIndex + 1 < end) {
+        stack.push(pivotIndex + 1)
+        stack.push(end)
+      }
+    }
+
+    view.renderArray(arr, 0, undefined, undefined)
+    view.enabledBtn()
+    view.toggleStopSign()
+    return arr
   },
   mergeSort: async function mergeSort(arr) {
     let sorted = [...arr]
